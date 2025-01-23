@@ -1,0 +1,70 @@
+---
+#
+# Oracle Linux Automation Manager
+#
+# Copyright (c) 2025 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at
+# https://oss.oracle.com/licenses/upl.
+#
+# Description: Playbook to list VM's by Oracle Linux Virtualization Manager (OLVM) cluster
+#
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+
+
+---
+- name: List VMs in OLVM using environment variables
+  hosts: all
+  gather_facts: false
+  tasks:
+
+    - name: Login to OLVM manager
+      ovirt_auth:
+        url: "{{ lookup('env', 'OVIRT_URL') }}"
+        username: "{{ lookup('env', 'OVIRT_USERNAME') }}"
+        password: "{{ lookup('env', 'OVIRT_PASSWORD') }}"
+        ca_file: "{{ olvm_cafile | default(omit) }}"
+        insecure: "{{ olvm_insecure | default(true) }}"
+      tags:
+        - always
+
+    - name: List OLVM VM's
+      ovirt_vm_info:
+          auth: "{{ ovirt_auth }}"
+      register: result
+
+    - name: Print out {{ vm_name }} VM information
+      debug:
+        msg: "{{ result.ovirt_vms }}"
+
+    - name: Get list of storage domains
+      ovirt_storage_domain_info:
+        auth: "{{ ovirt_auth }}"
+      register: storage_domains_info
+
+    - name: Print storage domain names
+      debug:
+        msg: >-
+          Storage Domains:
+          {{ storage_domains_info.ovirt_storage_domains | map(attribute='name') | join(', ') }}
+
+    - name: Get list of networks
+      ovirt.ovirt.ovirt_network_info:
+        auth: "{{ ovirt_auth }}"
+      register: networks_info
+
+    - name: Print network names
+      debug:
+        msg: >-
+          Networks:
+          {{ networks_info.ovirt_networks | map(attribute='name') | join(', ') }}
+
+    - name: Get list of templates
+      ovirt.ovirt.ovirt_template_info:
+        auth: "{{ ovirt_auth }}"
+      register: templates_info
+
+    - name: Print template names
+      debug:
+        msg: >-
+          Templates:
+          {{ templates_info.ovirt_templates | map(attribute='name') | join(', ') }}
