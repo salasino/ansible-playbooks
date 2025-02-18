@@ -1,4 +1,4 @@
-# Oracle Linux Automation Manager 2.1 Single Host Deployment
+# Oracle Linux Automation Manager 2.2 Single Host Deployment
 
 The playbook provides a single host installation of [Oracle Linux Automation Manager](https://docs.oracle.com/en/operating-systems/oracle-linux-automation-manager/) using the details from an inventory file.
 
@@ -30,7 +30,7 @@ It configures a single node with the following roles:
 1. Clone the repo:
 
     ```
-    git clone https://github.com/oracle-samples/ansible-collections.git ol-playbooks
+    git clone https://github.com/oracle-samples/ansible-playbooks.git ol-playbooks
     cd ol-playbooks/playbooks/OLAM/single-node
     cp group_vars/all.yml.example group_vars/all.yml
     cp inventory/hosts.ini.example inventory/hosts.ini

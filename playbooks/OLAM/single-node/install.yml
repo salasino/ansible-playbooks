@@ -149,9 +149,9 @@
         name: postgresql
         state: restarted
 
-# Configure OLAM 2.1 host
+# Configure OLAM 2.2 host
 
-- name: Configure OLAM 2.1 host
+- name: Configure OLAM 2.2 host
   hosts: control_node
   collections:
     - ansible.posix
@@ -164,10 +164,9 @@
     node_ip: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
 
   tasks:
-
     - name: install Oracle Linux Automation Manager repository
       dnf:
-        name: oraclelinux-automation-manager-release-el8
+        name: oraclelinux-automation-manager-release-el8-2.2
         state: present
       environment: "{{ proxy_env }}"
 
@@ -179,10 +178,18 @@
         value: "0"
         mode: 0644
 
-    - name: enable Oracle Linux Automation Manager 2.0 repository
+    - name: disable Oracle Linux Automation Manager 2.0 repository
       ini_file:
         path: "/etc/yum.repos.d/oraclelinux-automation-manager-ol8.repo"
         section: ol8_automation2
+        option: enabled
+        value: "0"
+        mode: 0644
+
+    - name: enable Oracle Linux Automation Manager 2.2 repository
+      ini_file:
+        path: "/etc/yum.repos.d/oraclelinux-automation-manager-ol8.repo"
+        section: ol8_automation2.2
         option: enabled
         value: "1"
         mode: 0644
