@@ -1,0 +1,97 @@
+---
+
+# dbservers
+
+cdb_service_name: "{{ oracle_facts[db_name].dbNodeLevelDetails[ansible_hostname].cdb_service_name }}"
+
+database_config:
+  db_name:              "{{ oracle_facts | community.general.json_query(db_name+'.db_name') }}"
+  db_unique_name:       "{{ oracle_facts | community.general.json_query(db_name+'.db_unique_name') }}"
+  db_role:              "{{ oracle_facts | community.general.json_query(db_name+'.db_role') }}"
+  # cdb_connectString:    "{{ oracle_facts[db_name].db_unique_name  }}.{{ oracle_facts[db_name].dbDomain }}"
+  oracle_home:          "{{ oracle_facts | community.general.json_query(db_name+'.oracle_home') }}"
+  oracle_base:          "{{ oracle_facts | community.general.json_query(db_name+'.oracle_home') }}"
+  # oracle_base:          "{{ oracle_facts[db_name].oracle_home | default('not_defined/a/b/c') | dirname | dirname | dirname }}"
+  instance_name:        "{{ oracle_facts | community.general.json_query(db_name+'.instance_name') }}"
+  db_domain:            "{{ oracle_facts | community.general.json_query(db_name+'.db_domain') }}"
+  db_type:              "{{ oracle_facts | community.general.json_query(db_name+'.db_type') }}"
+  dg_on:                "{{ oracle_facts | community.general.json_query(db_name+'.dg_on') }}"
+  # isCDB:                "{{ oracle_facts[db_name].isCDB }}"
+  oracle_home_version:  "{{ oracle_facts | community.general.json_query(db_name+'.oracle_home_version') }}"
+  flashback_on:         "{{ oracle_facts | community.general.json_query(db_name+'.flashback_on') }}"
+  force_logging_on:     "{{ oracle_facts | community.general.json_query(db_name+'.force_logging_on') }}"
+  # master_node:          "{% if oracle_facts.system.dbaascli is true %}{{ (oracle_facts[db_name].dbNodeLevelDetails | dict2items | community.general.json_query('[?value.status!=`Not running`].key')) | intersect(ansible_play_hosts | map('extract', hostvars, 'ansible_hostname') ) | sort | first }}{% else %}{{ oracle_facts[db_name].master_node }}{% endif %}" 
+  master_node:          "{{ oracle_facts | community.general.json_query(db_name+'.master_node') }}"
+  # master_node:          "{{ grid_config.master_node }}"
+  tde_on:               "{{ oracle_facts | community.general.json_query(db_name+'.tde_on') }}"
+  wallet_root:          "{{ oracle_facts | community.general.json_query(db_name+'.wallet_root') }}"
+  # pdbs: "{{ oracle_facts[db_name].pdbs  }}"
+  pga_aggregate_target:       "{{ oracle_facts | community.general.json_query(db_name+'.pga_aggregate_target') }}"
+  processes:                  "{{ oracle_facts | community.general.json_query(db_name+'.processes') }}"
+  sga_target:                 "{{ oracle_facts | community.general.json_query(db_name+'.sga_target') }}"
+  db_recovery_file_dest_size: "{{ oracle_facts | community.general.json_query(db_name+'.db_recovery_file_dest_size') }}"
+
+pdb_config:
+  connectString:  "{{ oracle_facts[db_name].pdbs[pdb_name] | community.general.json_query('pdbConnectStrings[*].connectString') | first }}"
+  serviceName:    "{{ oracle_facts[db_name].pdbs[pdb_name] | community.general.json_query('pdbConnectStrings[*].serviceName') | first }}"
+
+# @var oracle_env:description: >
+# The variable is used for shell, command tasks to set envircurl -s -K access.cfg http://localhost:<admnsvr port>/services/v2/authorizations/Security/oggadmin -X PATCH --data '{"credential":"<passwd>"}' | jq -Moansible.builtin.nment Variables.
+#
+# Do not set it in inventory!
+# @end
+
+oracle_env:
+  PATH: "{{ database_config.oracle_home }}/bin:{{ database_config.oracle_home }}/OPatch:$PATH"
+  ORACLE_UNQNAME: "{{ database_config.db_unique_name }}"
+  ORACLE_SID: "{{ database_config.instance_name }}"
+  ORACLE_HOSTNAME: "{{ ansible_hostname }}"
+  LD_LIBRARY_PATH: "{{ database_config.oracle_home }}/lib"
+  ORACLE_BASE: "{{ database_config.oracle_home }}"
+  OH: "{{ database_config.oracle_home }}"
+  ORACLE_HOME: "{{ database_config.oracle_home }}"
+  # TNS_ADMIN: "{{ database_config.oracle_home }}/network/admin/{{ db_name }}"
+
+# @var _db_unique_name_for_pdb:description: >
+# The variable is internal used only.
+#
+# Do not set it in inventory!
+#
+# get db_unique_name from CDB for current pdb
+# Requires `opdb` as `loop_var`.
+# @end
+# @var _db_unique_name_for_pdb: $ "_internal_used_"
+# _db_unique_name_for_pdb: >-
+#   {{ (db_name
+#     | selectattr('oracle_db_name', 'equalto', _opdb_loop_helper['cdb'])
+#     | map(attribute='oracle_db_unique_name', default=_opdb_loop_helper['cdb']))[0]
+#   }}
+
+# Defaults
+
+# primary_node: "{{ vars[db_name + '_primary_node'] }}"
+# standby_node: "{{ vars[db_name + '_standby_node'] }}"
+# db_ezconnect: "sys/{{ db_sys_password }}@{{ grid_config.scan_name }}:{{ grid_config.scanListenerTCPPorts }}/{{ database_config.db_unique_name }}.{{ database_config.dbDomain }} as sysdba"
+pdb_name: "{{ db_name|upper }}P{{ pdbNumber | default(1) }}"
+
+# Oracle database list 
+#
+db_name_list: "{{ database_list | split(',') }}"
+
+# DB Passwords
+db_sys_user: sys
+db_tde_password: "{{ db_sys_password }}" 
+awr_admin_password: "{{ db_sys_password }}" 
+
+# Tools
+dbaasca: /var/opt/oracle/dbaastools/dbaasca/bin/dbca
+dbca: "{{ database_config.oracle_home }}/bin/dbca"
+pilot: /opt/oracle/pilot/bin/pilot
+
+# Oracle database OS user (sqlplus, rman, srvctl).
+#
+oracle_user: oracle
+
+# Oracle Grid Infrastructure OS user (asmcmd, crsctl, srvctl).
+#
+grid_user: grid
