@@ -74,6 +74,39 @@
     when: configureStandby is not skipped
     failed_when: configureStandby.failed 
 
+  - name: Run DBaasCLI dataguard registerStandby 
+    expect:
+      command: >
+        dbaascli dataguard registerStandby 
+        --db_name {{ db_name }}
+        --standbyDBUniqueName {{ hostvars['localhost']['standby']['db_unique_name'] }}
+        --standbyScanIPAddresses {{ hostvars['localhost']['standby']['scan_ip_addresses'] }}
+        --standbyScanPort {{ hostvars['localhost']['standby']['scan_port'] }}
+        --standbyServiceName {{ hostvars['localhost']['standby']['db_unique_name'] }}.{{ hostvars['localhost']['standby']['db_domain'] }}
+      responses:
+        PRIMARY_DB_SYS_PASSWORD: "{{ db_sys_password }}" 
+        PRIMARY_DB_TDE_PASSWORD: "{{ db_tde_password }}" 
+        AWR_ADMIN_PASSWORD: "{{ awr_admin_password }}" 
+        AWR_ADMIN_PASSWORD (reconfirmation): "{{ awr_admin_password }}" 
+      timeout: 14400 
+    throttle: 1
+    register: registerStandby
+    failed_when: "'dbaascli execution completed' not in registerStandby.stdout"
+    ignore_errors: true
+
+  - debug:
+      msg: "{{ output | regex_findall('([^\n,\r]+)') | default() }}" 
+    vars:
+      output: | 
+        ==================================================
+        DBaasCLI registerStandby
+        -----------------
+        {{ registerStandby.cmd }}
+        -----------------
+        {{ registerStandby.stdout }} 
+        ==================================================
+    when: registerStandby is not skipped
+
   - name: Run DBaasCLI dataguard switchover prereqs
     command: >
       dbaascli dataguard switchover 
