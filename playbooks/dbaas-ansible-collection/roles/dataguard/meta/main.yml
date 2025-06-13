@@ -25,4 +25,3 @@ galaxy_info:
     - database 
 
 dependencies:
-    - oracle_facts

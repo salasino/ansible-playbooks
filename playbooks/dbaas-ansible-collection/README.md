@@ -115,18 +115,16 @@ oracle.dbaas 1.0.0
 <!--start playbook content-->
 Playbooks:
   1) oracle.dbaas.onboarding
-  2) oracle.dbaas.dbaas
-  3) oracle.dbaas.dataguard_configure
+  2) oracle.dbaas.database
+  3) oracle.dbaas.dataguard
   4) oracle.dbaas.framework
 <!--end playbook content-->
 
 <!--start collection content-->
 Roles:
   1) oracle_facts 
-  2) dbaas 
-  3) dataguard_configure 
-  4) framework_start 
-  5) framework_stop 
+  2) database 
+  3) dataguard
 <!--end collection content-->
 
 ## DBaaS Deployment
@@ -167,7 +165,7 @@ TIP:
 
 ```bash
 export VAULT_PASSWORD=<Vault_password>; history -d $(history 1)
-ansible-playbook oracle.dbaas.framework -i inventory/$DBAAS_ENV.yml -e @inventory/$DBAAS_ENV.ini -e @inventory/$DBAAS_ENV.key --limit $DBAAS_ENV --vault-password-file=./inventory/vault_pass --tags onboarding
+ansible-playbook oracle.dbaas.database -i inventory/$DBAAS_ENV.yml -e @inventory/$DBAAS_ENV.ini -e @inventory/$DBAAS_ENV.key --limit $DBAAS_ENV --vault-password-file=./inventory/vault_pass --tags onboarding
 ```
 
 ### DBaaS - Create database

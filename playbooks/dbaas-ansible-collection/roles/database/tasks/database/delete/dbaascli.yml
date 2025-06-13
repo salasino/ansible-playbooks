@@ -18,8 +18,22 @@
     - ansible_hostname in database_config.master_node
   block:
 
+  - name: Run DBaaSCLI dataguard deregisterStandby
+    command: >-
+      dbaascli dataguard deregisterStandby 
+      --db_name {{ db_name }}
+      --standbyDBUniqueName {{ database_config.db_unique_name }}
+    register: _dbaascli_database_delete_standby
+    failed_when: "'dbaascli execution completed' not in _dbaascli_database_delete_standby.stdout"
+    when:
+      - (('primary' in ansible_run_tags) or 
+        ('standby' in ansible_run_tags)) 
+      - database_config.db_role == "physical_standby"
+
   - name: Run DBaaSCLI database delete standby
-    command: "dbaascli database delete --db_name {{ db_name }}"
+    command: >-
+      dbaascli database delete 
+      --db_name {{ db_name }}
     register: _dbaascli_database_delete_standby
     failed_when: "'dbaascli execution completed' not in _dbaascli_database_delete_standby.stdout"
     when:
@@ -28,9 +42,13 @@
       - database_config.db_role == "physical_standby"
 
   - name: Run DBaaSCLI database delete primary 
-    command: "dbaascli database delete --db_name {{ db_name }}"
+    command: >-
+      dbaascli database delete 
+      --db_name {{ db_name }}
     register: _dbaascli_database_delete_primary
     failed_when: "'dbaascli execution completed' not in _dbaascli_database_delete_primary.stdout"
     when:
       - "'primary' in ansible_run_tags" 
       - database_config.db_role == "primary"
+
+...

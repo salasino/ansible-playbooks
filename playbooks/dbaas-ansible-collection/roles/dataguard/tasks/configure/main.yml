@@ -79,7 +79,7 @@
 
   - name: standby configure
     include_tasks:
-      file: standby/main.yml  
+      file: standby/configure/main.yml  
       apply:
         tags: 
           - standby_configure
@@ -89,11 +89,16 @@
       loop_var: db_name 
     tags: always 
 
-  # - name: registerStandby
-  #   include_tasks:
-  #     file: registerStandby.yml  
-  #   with_items: "{{ db_name_list }}"
-  #   loop_control:
-  #     loop_var: db_name 
+  - name: standby register
+    include_tasks:
+      file: standby/register/main.yml  
+      apply:
+        tags: 
+          - standby_configure
+          - configure
+    with_items: "{{ db_name_list }}"
+    loop_control:
+      loop_var: db_name 
+    tags: always 
 
 ...

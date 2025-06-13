@@ -10,29 +10,23 @@
 #
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
-- name: configureStandby 
-  when:
-    - not database_config.db_role 
-    - ansible_hostname in hostname_target
-    - hostvars['localhost']['primary'] is defined
-    - hostvars['localhost']['standby'] is defined
+- name: dataguard standby 
   block:
 
-  - name: DBaasCA 
-    ansible.builtin.include_tasks: dbaasca.yml
+  - name: configre standby 
+    ansible.builtin.include_tasks: configure/main.yml
     when:
-      - "'pilot' not in ansible_run_tags" 
-      - not system_config.dbaascli_on
+      - not database_config.db_role 
+      - ansible_hostname in hostname_target
+      - hostvars['localhost']['primary'] is defined
+      - hostvars['localhost']['standby'] is defined
 
-  - name: DBaasCLI
-    ansible.builtin.include_tasks: dbaascli.yml
-    when: system_config.dbaascli_on
-
-  - name: PILOT
-    ansible.builtin.include_tasks: pilot.yml
-    when: 
-      - "'pilot' in ansible_run_tags"
-      - not system_config.dbaascli_on
+  - name: register standby 
+    ansible.builtin.include_tasks: register/main.yml
+    when:
+      - database_config.db_role == 'physical_standby'
+      - hostvars['localhost']['standby'] is defined
+      - ansible_hostname in database_config.master_node
 
   rescue:
 

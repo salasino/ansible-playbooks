@@ -16,11 +16,11 @@
     - ansible_hostname in database_config.master_node
   block:
   
-  - name: DBaasCA 
+  - name: dbaasca database delete 
     ansible.builtin.include_tasks: dbaasca.yml
     when: not system_config.dbaascli_on
 
-  - name: DBaasCLI
+  - name: dbaascli database delete 
     ansible.builtin.include_tasks: dbaascli.yml
     when: system_config.dbaascli_on
     

@@ -1,13 +1,9 @@
 # TO-DO: add python packages that are required for this collection
 ansible
-ansible-creator
-ansible-dev-environment
 passlib
 jmespath
 xmltodict
-pandas
 redis
-plotly
 pexpect
 dnspython
 ipaddress

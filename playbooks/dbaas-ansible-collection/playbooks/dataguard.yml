@@ -42,6 +42,7 @@
       tags: always
       
   roles:
+    - oracle_facts
     - dataguard
 
 ...

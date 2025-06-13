@@ -18,52 +18,60 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: my_test
+module: sqlplus 
 
-short_description: This is my test module
+short_description: A module for executing Oracle SQL*Plus commands.
 
 # If this is part of a collection, you need to use semantic versioning,
 # i.e. the version is of the form "2.5.0" and not "2.4".
 version_added: "1.0.0"
 
-description: This is my longer description explaining my test module.
+description: It is relatively straight-forward to run a basic SQL*Plus commands in Ansible using the command or shell modules. 
 
 options:
-    name:
-        description: This is the message to send to the test module.
+    oracle_home:
+        description: Specifies Oracle home directory in which Oracle products are installed.
         required: true
         type: str
-    new:
-        description:
-            - Control to demo if the result of this module is changed or not.
-            - Parameter description can be a list as well.
+    oracle_sid:
+        description: Specifies the name of the Oracle Database instance on the host computer.
+        required: true
+        type: str 
+    sql_query:
+        description: Specifies the instructions that relational database management systems understand.
+        required: true
+        type: str 
+    markup:
+        description: Specifies the markup options for use in generating HTML or CSV output.
         required: false
-        type: bool
+        type: str 
 # Specify this value according to your collection
 # in format of namespace.collection.doc_fragment_name
 # extends_documentation_fragment:
 #     - my_namespace.my_collection.my_doc_fragment_name
 
 author:
-    - Your Name (@yourGitHubHandle)
+    - Sebastin Alasino (@salasino)
 '''
 
 EXAMPLES = r'''
 # Pass in a message
-- name: Test with a message
-  my_namespace.my_collection.my_test:
-    name: hello world
-
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  my_namespace.my_collection.my_test:
-    name: hello world
-    new: true
+- name: Run a Oracle SQLPlus command
+  oracle.dbaas.sqlplus:
+  args:
+    oracle_home: /u01/app/oracle/product/19.0.0/dbhome_1
+    oracle_sid: DBLVM1
+    markup: csv
+    sql_query: "select * from dual;" 
 
 # fail the module
-- name: Test failure of the module
-  my_namespace.my_collection.my_test:
-    name: fail me
+- name: Run a Oracle SQLPlus command
+  oracle.dbaas.sqlplus:
+  args:
+    oracle_home: /u01/app/oracle/product/19.0.0/dbhome_1
+    oracle_sid: DBLVM1
+    markup: csv
+    sql_query: "fail me" 
 '''
 
 RETURN = r'''
@@ -90,8 +98,8 @@ def run_module():
     module_args = dict(
         oracle_home=dict(type='str', required=True),
         oracle_sid=dict(type='str', required=True),
-        query=dict(type='str', required=True),
-        new=dict(type='bool', required=False, default=False)
+        sql_query=dict(type='str', required=True),
+        success=dict(type='bool', required=False, default=False),
     )
 
     # seed the result dict in the object
@@ -101,9 +109,6 @@ def run_module():
     # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
-        oracle_home='',
-        oracle_env='',
-        query='',
         results=''
     )
 
@@ -124,46 +129,45 @@ def run_module():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-    result['oracle_home'] = module.params['oracle_home']
-    result['oracle_sid'] = module.params['oracle_sid']
-    result['query'] = module.params['query']
-    result['results'] = (run_sqlplus(module.params['oracle_home'],module.params['oracle_sid'],module.params['query']))[1:-1]
+    result['results'] = (run_sqlplus(module.params['oracle_home'],module.params['oracle_sid'],module.params['sql_query'],module.params['success']))[1:-1]
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
-    if module.params['new']:
+    if module.params['success']:
         results['changed'] = True
 
     # during the execution of the module, if there is an exception or a
     # conditional state that effectively causes a failure, run
     # AnsibleModule.fail_json() to pass in the message and the result
-    if module.params['query'] == 'fail me':
+    if module.params['sql_query'] == 'fail me':
         module.fail_json(msg='You requested this to fail', **result)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
 
-def run_sqlplus(oracle_home,oracle_sid,query):
+def run_sqlplus(oracle_home,oracle_sid,sql_query,success):
 
     # Run a sql command or group of commands against
     # a database using sqlplus.
 
     sqlplus = os.path.join(oracle_home, 'bin/sqlplus')
-    sql_query = "set feedback off" + "\n" + "SET MARKUP CSV ON QUOTE OFF" + "\n" + query
     # my_env = {**os.environ, **oracle_sid}
     my_env = {'ORACLE_HOME': oracle_home, 'ORACLE_SID': oracle_sid, **os.environ}
+
+    sql_query_to_run = "set feedback off" + "\n" + "SET MARKUP CSV ON QUOTE OFF" + "\n" + sql_query
     
     p = subprocess.Popen(
-                            [sqlplus,'-L','-F','-SILENT','/ as sysdba'],
+                            [sqlplus,'-L','-F','-SILENT','-nologintime','/ as sysdba'],
                             stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             env=my_env
                         )
-    (stdout,stderr) = p.communicate(sql_query.encode('utf-8'))
+    (stdout,stderr) = p.communicate(sql_query_to_run.encode('utf-8'))
     stdout_lines = stdout.decode('utf-8').split("\n")
-
+    success = True
+    
     return stdout_lines
 
 def main():

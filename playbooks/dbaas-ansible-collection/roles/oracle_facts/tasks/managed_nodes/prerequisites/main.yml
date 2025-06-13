@@ -51,11 +51,11 @@
   - name: Create stage_dir.managed directory
     become: true
     file:
-      path: "stage_dir.managed.{{ item }}"
+      path: "{{ stage_dir.managed }}.{{ item }}"
       state: directory
       mode: '0755'
-      owner: oracle 
-      group: oinstall
+      owner: "{{ oracle_user }}" 
+      group: "{{ oracle_group }}"
     with_items:
       - workdir
       - tmp
